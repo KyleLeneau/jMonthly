@@ -21,12 +21,14 @@ $.widget("ui.jmonthly", {
 		
 	},
 	
-	changeMonth: function() {
-		if (false === self._trigger('beforeChangeMonth', event)) {
+	changeMonth: function(newDate) {
+		if (false === this._trigger('beforeChangeMonth', 0, [newDate])) {
 			return;
 		}
 		
+		//update obj with new date and draw...
 		
+		this._trigger('afterChangeMonth', 0, [newDate])
 	},
 	
 	addEvent: function(collection) {
@@ -39,13 +41,14 @@ $.widget("ui.jmonthly", {
 	
 	replaceEvents: function(collection) {
 		
-	}	
+	}
 	
 });
 
 $.extend($.ui.jmonthly, {
 	version: "0.0.1",
 	defaults: {
+		events: [],
 		firstDayOfWeek: 0,
 		startDate: new Date()
 	}
