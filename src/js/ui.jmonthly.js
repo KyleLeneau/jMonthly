@@ -14,10 +14,19 @@ $.widget("ui.jmonthly", {
 	_init: function() {
 		
 		this.element.addClass("ui-widget ui-corner-all");
+		
+	},
+	
+	destroy: function() {
+		
 	},
 	
 	changeMonth: function() {
-		alert(this.options.startDate);
+		if (false === self._trigger('beforeChangeMonth', event)) {
+			return;
+		}
+		
+		
 	},
 	
 	addEvent: function(collection) {
