@@ -1,0 +1,63 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1" />
+    <title>ui.jMonthly Sample</title>
+
+    <link rel="stylesheet" href="css/core.css" type="text/css" />
+	
+    <script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
+    <script type="text/javascript" src="js/time.js"></script>
+    <script type="text/javascript" src="js/date.js"></script>
+    <script type="text/javascript" src="js/ui.core.js"></script>
+    <script type="text/javascript" src="js/ui.jmonthly.js"></script>	
+	
+    <script type="text/javascript">
+        $().ready(function() {
+			
+			var events = [ 	{ "EventID": 1, "StartDateTime": "new Date(2009, 6, 29)", "EndDateTime": "new Date(2009, 5, 3)", "Title": "10:00 pm - EventTitle1", "URL": "#", "Description": "This is a sample event description" },
+							{ "EventID": 6, "StartDateTime": "new Date(2009, 6, 29)", "EndDateTime": "new Date(2009, 5, 3)", "Title": "10:00 pm - EventTitle6", "URL": "#", "Description": "This is a sample event description" },
+							{ "EventID": 7, "StartDateTime": new Date(2009, 6, 12), "Title": "10:00 pm - EventTitle7", "URL": "#", "Description": "This is a sample event description" },
+							{ "EventID": 3, "StartDateTime": "2009-07-28T12:30:00.0000000", "Title": "This is a much longer title", "URL": "#", "Description": "This is a sample event description", "CssClass": "Meeting" },
+							{ "EventID": 4, "StartDateTime": new Date(2009, 6, 13), "Title": "This is a much longer title", "URL": "#", "Description": "This is a sample event description", "CssClass": "Meeting" },
+							{ "EventID": 5, "StartDateTime": "2009-06-03", "EndDateTime": "2009-06-14", "Title": "This is a much longer title", "URL": "#", "Description": "This is a sample event description", "CssClass": "Meeting" }
+			];
+			
+			//$.jMonthCalendar.Initialize(options, events);
+			
+			
+			$("#jMonthCalendar").jmonthly();
+						
+			
+			$("#Button").click(function() {					
+				alert("click");
+			});
+			
+			$("#ChangeMonth").click(function() {
+				$("#jMonthCalendar").jmonthly('changeMonth');
+			});
+        });
+    </script>
+</head>
+<body>
+
+	<center>
+		<div id="jMonthCalendar"></div>
+
+		<button id="Button">Add More Events</button>
+
+		<button id="ChangeMonth">Change Months May 2009</button>
+	</center>
+	
+	<script type="text/javascript">
+	var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+	document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+	</script>
+	<script type="text/javascript">
+	try {
+	var pageTracker = _gat._getTracker("UA-4755411-2");
+	pageTracker._trackPageview();
+	} catch(err) {}</script>
+
+</body>
+</html>
