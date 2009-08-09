@@ -18,6 +18,31 @@
             return ("000" + s).slice(l * -1);
         };
 
+	/**
+	 * Determines whether or not this instance is in a leap year.
+	 * @return {Boolean} true if this instance is in a leap year, else false
+	 */
+	$P.isLeapYear = function() {
+		var y = this.getFullYear();
+		return (((y % 4 === 0) && (y % 100 !== 0)) || (y % 400 === 0));getDaysInMonth
+	};
+	
+	/**
+	 * Determines whether or not this instance is a weekday.
+	 * @return {Boolean} true if this instance is a weekday
+	 */
+	$P.isWeekday = function () { 
+	    return !(this.is().sat() || this.is().sun());
+	};
+
+	/**
+	 * Get the number of days in the current month, adjusted for leap year.
+	 * @return {Number}  The number of days in the month
+	 */
+	$P.getDaysInMonth = function () { 
+	    return Date.getDaysInMonth(this.getFullYear(), this.getMonth());
+	};
+	
     /**
      * Resets the time of this Date object to 12:00 AM (00:00), which is the start of the day.
      * @param {Boolean}  .clone() this date instance before clearing Time
