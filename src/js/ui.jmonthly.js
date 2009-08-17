@@ -9,68 +9,185 @@
 */
 (function($) {
 
-function CalendarMonth() {
-	this._workingDate = Date.today().moveToFirstDayOfMonth();
-	this._firstDayOfWeek = 0;
-	this._daysInMonth = 0;
-	this._firstOfMonth = null;
-	this._lastOfMonth = null;
-	this._gridOffset = 0;
-	this._totalDates = 0;
-	this._gridRows = 0;
-	this._totalBoxes = 0;
-	this._dateRange = {
-		startDate: null,
-		endDate: null
-	};
-	
-	this._init = function(sDate, firstDayOfWeek) {
-		// prime the object based on the date in
-		if (sDate == undefined) {
-			this._workingDate = Date.today().moveToFirstDayOfMonth();
-		} else {
-			this._workingDate = sDate.moveToFirstDayOfMonth();
-		}
-		if (firstDayOfWeek) {
-			this._firstDayOfWeek = firstDayOfWeek;
-		}
-		this._load();
-		return this;
-	};
-	
-	this._update = function(newDate) {
-		// update the object when changing months
-		this._workingDate = newDate.moveToFirstDayOfMonth();
-		this._load();
-		return this;
-	};
-	
-	this._load = function() {
-		this._daysInMonth = this._workingDate.getDaysInMonth();
-		this._firstOfMonth = this._workingDate.clone().moveToFirstDayOfMonth();
-		this._lastOfMonth = this._workingDate.clone().moveToLastDayOfMonth();
-		this._gridOffset = this._firstOfMonth.getDay() - this._firstDayOfWeek;
-		this._totalDates = this._gridOffset + this._daysInMonth;
-		this._gridRows = Math.ceil(this._totalDates / 7);
-		this._totalBoxes = this._gridRows * 7;
-		
-		this._dateRange.startDate = this._firstOfMonth.clone().addDays((-1) * this._gridOffset);
-		this._dateRange.endDate = this._lastOfMonth.clone().addDays(this._totalBoxes - (this._daysInMonth + this._gridOffset));
-	};
-};
-
-
-
 $.widget("ui.jmonthly", {
 	
 	_init: function() {
 		
-		this.element.addClass("ui-widget ui-corner-all");
+		this.element.addClass("ui-widget ui-corner-all ui-jmonthly");
 
 		// calendar object to track props.
-		this._setCalendar(new CalendarMonth()._init(new Date()));
+		this._calendar = new CalendarMonth().init(this.options.startDate);
+		console.log(this._calendar);
 		
-		console.log(this._getCalendar());
+		
+		this._drawCalendar(true);
+	},
+	
+	_drawCalendar: function(init) {
+		var o = this.options,
+			c = this._calendar,
+			now = new Date().clearTime();
+		
+		console.log("drawing calendar");
+		
+		var headerRow = this._drawHeader();
+		
+		// properties
+		var cH = this.element.outerHeight(),
+			rowHeight = (cH - o.headerHeight) / c.gridRows,
+			row = null;
+		
+		
+		//Build up the Body
+		var tBody = $('<tbody></tbody>').addClass('ui-jmonthly-body');
+		for (var i = 0; i < c.totalBoxes; i++) {
+			var currentDate = c.dateRange.startDate.clone().addDays(i);
+			if (i % 7 == 0 || i == 0) {
+				row = $("<tr></tr>").addClass('ui-jmonthly-week');
+				row.css({ "height" : rowHeight + "px" });
+				tBody.append(row);
+			}
+			
+			var weekday = (o.firstDayOfWeek + i) % 7;
+			var attrs = {'class':'ui-jmonthly-datebox' + (weekday == 0 || weekday == 6 ? ' Weekend ' : ''),
+						'date':currentDate.toString("M/d/yyyy")
+			};
+			
+			//dates outside of month range.
+			if (currentDate.compareTo(c.firstOfMonth) == -1 || currentDate.compareTo(c.lastOfMonth) == 1) {
+				attrs['class'] += ' Inactive';
+			}
+			
+			//check to see if current date rendering is today
+			if (currentDate.compareTo(now) == 0) { 
+				attrs['class'] += ' Today';
+			}
+			
+			//DateBox Events
+			var dateLink = $('<div><a>' + currentDate.getDate() + '</a></div>').addClass('ui-jmonthly-datelabel');
+			//dateLink.bind('click', { Date: currentDate.clone() }, def.onDayLinkClick);
+			
+			var dateBox = $("<td></td>").attr(attrs).append(dateLink);
+			//dateBox.bind('dblclick', { Date: currentDate.clone() }, def.onDayCellDblClick);
+			//dateBox.bind('click', { Date: currentDate.clone() }, def.onDayCellClick);
+			
+			/*if (o.dragableEvents) {
+				dateBox.droppable({
+					hoverClass: o.dragHoverClass,
+					tolerance: 'pointer',
+					drop: function(ev, ui) {
+						var eventId = ui.draggable.attr("eventid")
+						var newDate = new Date($(this).attr("date")).clearTime();
+						
+						var event;
+						$.each(cEvents, function() {
+							if (this.EventID == eventId) {
+								var days = new TimeSpan(newDate - this.StartDateTime).days;
+								
+								this.StartDateTime.addDays(days);
+								this.EndDateTime.addDays(days);
+																
+								event = this;
+							}
+						});
+						
+						$.J.ClearEventsOnCalendar();
+						_drawEventsOnCalendar();
+						
+						def.onEventDropped.call(this, event, newDate);
+					}
+				});
+			}*/
+			
+			//_boxes.push(new CalendarBox(i, currentDate, dateBox, dateLink));
+			row.append(dateBox);
+		}
+		tBody.append(row);
+
+		var a = this.element;
+		var cal = $('<table cellpadding="0" tablespacing="0"></table>').append(headerRow, tBody);
+		
+		a.hide();
+		a.html(cal);
+		a.fadeIn("normal");
+		
+		//_drawEventsOnCalendar();
+	},
+	
+	_drawHeader: function() {
+		var o = this.options;
+		var c = this._calendar;
+		
+		// Create Previous Month link for later
+		var pMonth = c.workingDate.clone().addMonths(-1);
+		var prevMLink = $('<div class="MonthNavPrev"><a class="link-prev">'+ o.previousLinkText +'</a></div>').click(function() {
+			this.changeMonth(pMonth);
+		});
+		
+		if (!o.previousLink) { 
+			prevMLink.addClass('ui-nav-disabled');
+		}
+		
+		//Create Next Month link for later
+		var nMonth = c.workingDate.clone().addMonths(1);
+		var nextMLink = $('<div class="MonthNavNext"><a class="link-next">'+ o.nextLinkText +'</a></div>').click(function() {
+			this.changeMonth(nMonth);
+		});
+		
+		if (!o.nextLink) { 
+			nextMLink.addClass('ui-nav-disabled');
+		}
+		
+		
+		//Create Previous Year link for later
+		var prevYear = c.workingDate.clone().addYears(-1);
+		var prevYLink = $('<div class="YearNavPrev"><a>'+ prevYear.getFullYear() +'</a></div>').click(function() {
+			this.changeMonth(prevYear);
+		});
+		
+		//Create Next Year link for later
+		var nextYear = c.workingDate.clone().addYears(1);
+		var nextYLink = $('<div class="YearNavNext"><a>'+ nextYear.getFullYear() +'</a></div>').click(function() {
+			this.changeMonth(nextYear);
+		});
+		
+		if (!o.yearLinks) { 
+			prevYLink.addClass('ui-nav-disabled');
+			nextYLink.addClass('ui-nav-disabled');
+		}
+		
+		//Create Today link for later
+		var todayLink = $('<div class="TodayLink"><a class="link-today">'+ o.todayLinkText +'</a></div>').click(function() {
+			this.changeMonth(new Date());
+		});
+		
+		if (!o.todayLink) { 
+			todayLink.addClass('ui-nav-disabled');
+		}
+		
+
+		//Build up the Header first,  Navigation
+		var navRow = $('<tr><td colspan="7"><div class="FormHeader MonthNavigation"></div></td></tr>');
+		var navHead = $('.MonthNavigation', navRow);
+		
+		navHead.append(prevMLink, nextMLink);
+		navHead.append(todayLink);
+		navHead.append($('<div class="MonthName"></div>').append(Date.CultureInfo.monthNames[c.workingDate.getMonth()] + " " + c.workingDate.getFullYear()));
+		navHead.append(prevYLink);
+		navHead.append(nextYLink);
+		
+		
+		//  Days
+		var headRow = $("<tr></tr>");		
+		for (var i = o.firstDayOfWeek; i < o.firstDayOfWeek+7; i++) {
+			var weekday = i % 7;
+			var wordday = Date.CultureInfo.dayNames[weekday];
+			headRow.append('<th title="' + wordday + '" class="DateHeader' + (weekday == 0 || weekday == 6 ? ' Weekend' : '') + '"><span>' + wordday + '</span></th>');
+		}
+		
+		headRow = $("<thead id=\"CalendarHead\"></thead>").css({ "height" : o.headerHeight + "px" }).append(headRow);
+		headRow = headRow.prepend(navRow);
+		return headRow;
 	},
 	
 	destroy: function() {
@@ -97,15 +214,6 @@ $.widget("ui.jmonthly", {
 	
 	replaceEvents: function(collection) {
 		
-	},
-	
-	_setCalendar: function(calendar) {
-		this._setData('calendar', calendar);
-		//everytime we se the date call refresh to update state/html?
-	},
-	
-	_getCalendar: function() {
-		return this._getData('calendar');
 	}
 	
 });
@@ -114,9 +222,75 @@ $.extend($.ui.jmonthly, {
 	version: "0.0.1",
 	defaults: {
 		events: [],
+		headerHeight: 50,
 		firstDayOfWeek: 0,
-		startDate: new Date()
+		startDate: new Date(),
+		dragableEvents: false,
+		dragHoverClass: 'DateBoxOver',
+		
+		todayLink: true,
+		todayLinkText: 'Today',
+		
+		previousLink: true,
+		previousLinkText: '&lsaquo; Prev',
+		
+		nextLink: true,
+		nextLinkText: 'Next &rsaquo;',
+		
+		yearLinks: true,
 	}
 });
+
+
+function CalendarMonth() {
+	this.workingDate = Date.today().moveToFirstDayOfMonth();
+	this.firstDayOfWeek = 0;
+	this.daysInMonth = 0;
+	this.firstOfMonth = null;
+	this.lastOfMonth = null;
+	this.gridOffset = 0;
+	this.totalDates = 0;
+	this.gridRows = 0;
+	this.totalBoxes = 0;
+	this.dateRange = {
+		startDate: null,
+		endDate: null
+	};
 	
+	this.init = function(sDate, firstDayOfWeek) {
+		// prime the object based on the date in
+		if (sDate == undefined) {
+			this.workingDate = Date.today().moveToFirstDayOfMonth();
+		} else {
+			this.workingDate = sDate.moveToFirstDayOfMonth();
+		}
+		if (firstDayOfWeek) {
+			this.firstDayOfWeek = firstDayOfWeek;
+		}
+		this._load();
+		return this;
+	};
+	
+	this.update = function(newDate) {
+		// update the object when changing months
+		this.workingDate = newDate.moveToFirstDayOfMonth();
+		this._load();
+		return this;
+	};
+	
+	this._load = function() {
+		this.daysInMonth = this.workingDate.getDaysInMonth();
+		this.firstOfMonth = this.workingDate.clone().moveToFirstDayOfMonth();
+		this.lastOfMonth = this.workingDate.clone().moveToLastDayOfMonth();
+		this.gridOffset = this.firstOfMonth.getDay() - this.firstDayOfWeek;
+		this.totalDates = this.gridOffset + this.daysInMonth;
+		this.gridRows = Math.ceil(this.totalDates / 7);
+		this.totalBoxes = this.gridRows * 7;
+		
+		this.dateRange.startDate = this.firstOfMonth.clone().addDays((-1) * this.gridOffset);
+		this.dateRange.endDate = this.lastOfMonth.clone().addDays(this.totalBoxes - (this.daysInMonth + this.gridOffset));
+	};
+};
+
+
 })(jQuery);
