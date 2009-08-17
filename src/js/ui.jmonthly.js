@@ -13,7 +13,7 @@ $.widget("ui.jmonthly", {
 	
 	_init: function() {
 		
-		this.element.addClass("ui-widget ui-corner-all ui-jmonthly");
+		this.element.addClass("ui-jmonthly");
 
 		// calendar object to track props.
 		this._calendar = new CalendarMonth().init(this.options.startDate);
@@ -26,9 +26,8 @@ $.widget("ui.jmonthly", {
 	_drawCalendar: function(init) {
 		var o = this.options,
 			c = this._calendar,
+			self = this,
 			now = new Date().clearTime();
-		
-		console.log("drawing calendar");
 		
 		var headerRow = this._drawHeader();
 		
@@ -49,27 +48,35 @@ $.widget("ui.jmonthly", {
 			}
 			
 			var weekday = (o.firstDayOfWeek + i) % 7;
-			var attrs = {'class':'ui-jmonthly-datebox' + (weekday == 0 || weekday == 6 ? ' Weekend ' : ''),
+			var attrs = {'class':'ui-jmonthly-datebox' + (weekday == 0 || weekday == 6 ? ' weekend ' : ''),
 						'date':currentDate.toString("M/d/yyyy")
 			};
 			
-			//dates outside of month range.
-			if (currentDate.compareTo(c.firstOfMonth) == -1 || currentDate.compareTo(c.lastOfMonth) == 1) {
-				attrs['class'] += ' Inactive';
-			}
-			
-			//check to see if current date rendering is today
-			if (currentDate.compareTo(now) == 0) { 
-				attrs['class'] += ' Today';
-			}
-			
 			//DateBox Events
-			var dateLink = $('<div><a>' + currentDate.getDate() + '</a></div>').addClass('ui-jmonthly-datelabel');
-			//dateLink.bind('click', { Date: currentDate.clone() }, def.onDayLinkClick);
+			var dateLink = $('<div><span>' + currentDate.getDate() + '</span></div>').addClass('ui-jmonthly-datelabel');
+			dateLink.bind('click.jmonthly', currentDate.clone(), function(e) { 
+				self._trigger("onDayTextClick", e, e.data);
+			});
 			
 			var dateBox = $("<td></td>").attr(attrs).append(dateLink);
-			//dateBox.bind('dblclick', { Date: currentDate.clone() }, def.onDayCellDblClick);
-			//dateBox.bind('click', { Date: currentDate.clone() }, def.onDayCellClick);
+			dateBox.bind('dblclick.jmonthly', currentDate.clone(), function(e) {
+				self._trigger('onDateBoxDoubleClick', e, e.data);
+			});
+			dateBox.bind('click.jmonthly', currentDate.clone(), function(e) {
+				self._trigger('onDateBoxClick', e, e.data);
+			});
+			
+			
+			// dates outside of month range.
+			if (currentDate.getMonth() != c.workingDate.getMonth()) {
+				dateBox.addClass('inactive');
+			}
+			
+			// check to see if current date rendering is today
+			if (currentDate.isToday(now)) { 
+				dateBox.addClass('today');
+			}
+			
 			
 			/*if (o.dragableEvents) {
 				dateBox.droppable({
@@ -115,13 +122,14 @@ $.widget("ui.jmonthly", {
 	},
 	
 	_drawHeader: function() {
-		var o = this.options;
-		var c = this._calendar;
+		var o = this.options,
+			c = this._calendar,
+			self = this;
 		
 		// Create Previous Month link for later
 		var pMonth = c.workingDate.clone().addMonths(-1);
 		var prevMLink = $('<div class="MonthNavPrev"><a class="link-prev">'+ o.previousLinkText +'</a></div>').click(function() {
-			this.changeMonth(pMonth);
+			self.changeMonth(pMonth);
 		});
 		
 		if (!o.previousLink) { 
@@ -131,7 +139,7 @@ $.widget("ui.jmonthly", {
 		//Create Next Month link for later
 		var nMonth = c.workingDate.clone().addMonths(1);
 		var nextMLink = $('<div class="MonthNavNext"><a class="link-next">'+ o.nextLinkText +'</a></div>').click(function() {
-			this.changeMonth(nMonth);
+			self.changeMonth(nMonth);
 		});
 		
 		if (!o.nextLink) { 
@@ -142,13 +150,13 @@ $.widget("ui.jmonthly", {
 		//Create Previous Year link for later
 		var prevYear = c.workingDate.clone().addYears(-1);
 		var prevYLink = $('<div class="YearNavPrev"><a>'+ prevYear.getFullYear() +'</a></div>').click(function() {
-			this.changeMonth(prevYear);
+			self.changeMonth(prevYear);
 		});
 		
 		//Create Next Year link for later
 		var nextYear = c.workingDate.clone().addYears(1);
 		var nextYLink = $('<div class="YearNavNext"><a>'+ nextYear.getFullYear() +'</a></div>').click(function() {
-			this.changeMonth(nextYear);
+			self.changeMonth(nextYear);
 		});
 		
 		if (!o.yearLinks) { 
@@ -158,7 +166,7 @@ $.widget("ui.jmonthly", {
 		
 		//Create Today link for later
 		var todayLink = $('<div class="TodayLink"><a class="link-today">'+ o.todayLinkText +'</a></div>').click(function() {
-			this.changeMonth(new Date());
+			self.changeMonth(new Date());
 		});
 		
 		if (!o.todayLink) { 

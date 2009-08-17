@@ -24,15 +24,7 @@
 	 */
 	$P.isLeapYear = function() {
 		var y = this.getFullYear();
-		return (((y % 4 === 0) && (y % 100 !== 0)) || (y % 400 === 0));getDaysInMonth
-	};
-	
-	/**
-	 * Determines whether or not this instance is a weekday.
-	 * @return {Boolean} true if this instance is a weekday
-	 */
-	$P.isWeekday = function () { 
-	    return !(this.is().sat() || this.is().sun());
+		return (((y % 4 === 0) && (y % 100 !== 0)) || (y % 400 === 0));
 	};
 
 	/**

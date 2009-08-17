@@ -52,31 +52,11 @@
 .ui-jmonthly .ui-jmonthly-body{
 }
 
-.DateBox {
-	vertical-align:top;
-	border:solid 1px #ddd;
-	width:135px;
-}
-
-.DateLabel  {
-	height:16px;
-	width:100%;
-	background:#F7F7F7 none repeat scroll 0 0;
-	text-align:right;
-}
-
-.DateLabel a {
-	cursor:pointer;
-	padding:0 5px 2px;
-	text-decoration:none;
-	line-height:16px;
-}
-
-.ui-jmonthly-body .Inactive,
-.ui-jmonthly-body .Weekend {
+.ui-jmonthly-body .inactive,
+.ui-jmonthly-body .weekend {
 	background:#fafafa none repeat scroll 0 0;
 }
-.Today, .ui-jmonthly-body .DateBoxOver {
+.today, .ui-jmonthly-body .DateBoxOver {
 	background:#A9DFFF none repeat scroll 0 0;
 }
 
@@ -114,7 +94,23 @@
 .Event span.ui-icon-triangle-1-w { float:left; }
 .Event span.ui-icon-triangle-1-e { float:right; }
 
-.ui-jmonthly-datebox { }
-.ui-jmonthly-datelabel { }
+
+
+.ui-jmonthly-datebox {
+	vertical-align:top;
+	border:solid 1px #ddd;
+	width:135px;
+}
+
+.ui-jmonthly-datelabel {
+	height:16px;
+	background:#F7F7F7 none repeat scroll 0 0;
+	text-align:right;
+	cursor:pointer;
+	padding:0 5px 2px;
+	text-decoration:none;
+	line-height:16px;
+}
+
 .ui-jmonthly-week { }
 .ui-nav-disabled { }
