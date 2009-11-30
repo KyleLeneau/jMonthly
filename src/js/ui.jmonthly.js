@@ -16,16 +16,21 @@ $.widget("ui.jmonthly", {
 		this.element.addClass("ui-jmonthly");
 
 		// calendar object to track props.
-		this._calendar = new CalendarMonth().init(this.options.startDate);
-		$.log(this._calendar);
+		this._cal = new CalendarMonth().init(this.options.startDate);
+		$.log(this._cal);
 		
 		
 		this._drawCalendar(true);
+		
+		// draw events if passed in on init.
+		if (this.options.events.length > 0) {
+			this._drawEvents();
+		}
 	},
 	
 	_drawCalendar: function(init) {
 		var o = this.options,
-			c = this._calendar,
+			c = this._cal,
 			self = this,
 			now = new Date().clearTime();
 		
@@ -81,7 +86,7 @@ $.widget("ui.jmonthly", {
 				this._enableDropBox(dateBox);
 			}
 			
-			//_boxes.push(new CalendarBox(i, currentDate, dateBox, dateLink));
+			this._cal.boxes.push(new CalendarDateBox(i, currentDate, dateBox, dateLink));
 			row.append(dateBox);
 		}
 		tBody.append(row);
@@ -98,7 +103,7 @@ $.widget("ui.jmonthly", {
 	
 	_drawHeader: function() {
 		var o = this.options,
-			c = this._calendar,
+			c = this._cal,
 			self = this;
 		
 		// Create Previous Month link for later
@@ -201,6 +206,249 @@ $.widget("ui.jmonthly", {
 		});
 	},
 	
+	_drawEvents: function() {
+		var cEvents = this.options.events,
+			_boxes = this._cal.boxes,
+			_cal = this._cal,
+			self = this,
+			_eventObj = {};
+		
+		//filter the JSON array for proper dates
+		this._filterEvents();
+		this.clearEvents();
+		
+		if (cEvents && cEvents.length > 0) {			
+			$.each(cEvents, function(){
+				var ev = this;
+				//alert("eventID: " + ev.EventID + ", start: " + ev.StartDateTime + ",end: " + ev.EndDateTime);
+				
+				var tempStartDT = ev.StartDateTime.clone().clearTime();
+				var tempEndDT = ev.EndDateTime.clone().clearTime();
+				
+				var startI = new TimeSpan(tempStartDT - _cal.dateRange.startDate).days;
+				var endI = new TimeSpan(tempEndDT - _cal.dateRange.startDate).days;
+				//alert("start I: " + startI + " end I: " + endI);
+				
+				var istart = (startI < 0) ? 0 : startI;
+				var iend = (endI > _boxes.length - 1) ? _boxes.length - 1 : endI;
+				//alert("istart: " + istart + " iend: " + iend);
+				
+				
+				for (var i = istart; i <= iend; i++) {
+					var b = _boxes[i];
+
+					var startBoxCompare = tempStartDT.compareTo(b.date);
+					var endBoxCompare = tempEndDT.compareTo(b.date);
+
+					var continueEvent = ((i != 0 && startBoxCompare == -1 && endBoxCompare >= 0 && b.weekNumber != _boxes[i - 1].weekNumber) || (i == 0 && startBoxCompare == -1));
+					var toManyEvents = (startBoxCompare == 0 || (i == 0 && startBoxCompare == -1) || 
+										continueEvent || (startBoxCompare == -1 && endBoxCompare >= 0)) && b.vOffset >= (b.getCellBox().height() - b.getLabelHeight() - 32);
+					
+					//alert("b.vOffset: " + b.vOffset + ", cell height: " + (b.getCellBox().height() - b.getLabelHeight() - 32));
+					//alert(continueEvent);
+					//alert(toManyEvents);
+					
+					if (toManyEvents) {
+						if (!b.isTooManySet) {
+							var moreDiv = $('<div class="MoreEvents" id="ME_' + i + '">' + self.options.showMoreText + '</div>');
+							var pos = b.getCellPosition();
+							var index = i;
+
+							moreDiv.css({ 
+								"top" : (pos.top + (b.getCellBox().height() - b.getLabelHeight())), 
+								"left" : pos.left, 
+								"width" : (b.getLabelWidth() - 7),
+								"position" : "absolute" });
+							
+							moreDiv.click(function(e) { _showMoreClick(e, index); });
+							
+							_eventObj[moreDiv.attr("id")] = moreDiv;
+							b.isTooManySet = true;
+						} //else update the +more to show??
+						b.events.push(ev);
+					} else if (startBoxCompare == 0 || (i == 0 && startBoxCompare == -1) || continueEvent) {
+						var block = self._buildEventBlock(ev, b.weekNumber);						
+						var pos = b.getCellPosition();
+						
+						block.css({ 
+							"top" : (pos.top + b.getLabelHeight() + b.vOffset), 
+							"left" : pos.left, 
+							"width" : (b.getLabelWidth() - 7), 
+							"position" : "absolute" });
+						
+						b.vOffset += 19;
+						
+						if (continueEvent) {
+							block.prepend($('<span />').addClass("ui-icon").addClass("ui-icon-triangle-1-w"));
+							
+							var e = _eventObj['Event_' + ev.EventID + '_' + (b.weekNumber - 1)];
+							if (e) { e.prepend($('<span />').addClass("ui-icon").addClass("ui-icon-triangle-1-e")); }
+						}
+						
+						_eventObj[block.attr("id")] = block;
+						
+						b.events.push(ev);
+					} else if (startBoxCompare == -1 && endBoxCompare >= 0) {
+						var e = _eventObj['Event_' + ev.EventID + '_' + b.weekNumber];
+						if (e) {
+							var w = e.css("width")
+							e.css({ "width" : (parseInt(w) + b.getLabelWidth() + 1) });
+							b.vOffset += 19;
+							b.events.push(ev);
+						}
+					}
+					
+					//end of month continue
+					if (i == iend && endBoxCompare > 0) {
+						var e = _eventObj['Event_' + ev.EventID + '_' + b.weekNumber];
+						if (e) { e.prepend($('<span />').addClass("ui-icon").addClass("ui-icon-triangle-1-e")); }
+					}
+				}
+			});
+			
+			for (var o in _eventObj) {
+				_eventObj[o].hide();
+				this.element.append(_eventObj[o]);
+				_eventObj[o].show();
+			}
+		}
+	},
+	
+	//This function will clean the JSON array, primaryly the dates and put the correct ones in the object.  Intended to alwasy be called on event functions.
+	_filterEvents: function() {
+		var cEvents = this.options.events;
+		var self = this;
+		
+		if (cEvents && cEvents.length > 0) {
+			var multi = [];
+			var single = [];
+			
+			//Update and parse all the dates
+			$.each(cEvents, function(){
+				var ev = this;
+				//Date Parse the JSON to create a new Date to work with here				
+				if(ev.StartDateTime) {
+					if (typeof ev.StartDateTime == 'object' && ev.StartDateTime.getDate) { this.StartDateTime = ev.StartDateTime; }
+					if (typeof ev.StartDateTime == 'string' && ev.StartDateTime.split) { this.StartDateTime = self._getJSONDate(ev.StartDateTime); }
+				} else if(ev.Date) { // DEPRECATED
+					if (typeof ev.Date == 'object' && ev.Date.getDate) { this.StartDateTime = ev.Date; }
+					if (typeof ev.Date == 'string' && ev.Date.split) { this.StartDateTime = _getJSONDate(ev.Date); }
+				} else {
+					return;  //no start date, or legacy date. no event.
+				}
+				
+				if(ev.EndDateTime) {
+					if (typeof ev.EndDateTime == 'object' && ev.EndDateTime.getDate) { this.EndDateTime = ev.EndDateTime; }
+					if (typeof ev.EndDateTime == 'string' && ev.EndDateTime.split) { this.EndDateTime = self._getJSONDate(ev.EndDateTime); }
+				} else {
+					this.EndDateTime = this.StartDateTime.clone();
+				}
+				
+				if (this.StartDateTime.clone().clearTime().compareTo(this.EndDateTime.clone().clearTime()) == 0) {
+					single.push(this);
+				} else if (this.StartDateTime.clone().clearTime().compareTo(this.EndDateTime.clone().clearTime()) == -1) {
+					multi.push(this);
+				}
+			});
+			
+			multi.sort(self._eventSort);
+			single.sort(self._eventSort);
+			cEvents = [];
+			$.merge(cEvents, multi);
+			$.merge(cEvents, single);
+		}
+	},
+	
+	_eventSort: function(a, b) {
+		return a.StartDateTime.compareTo(b.StartDateTime);
+	},
+	
+	_getJSONDate: function(dateStr) {
+		//check conditions for different types of accepted dates
+		var tDt, k;
+		if (typeof dateStr == "string") {
+			
+			//  "2008-12-28T00:00:00.0000000"
+			var isoRegPlus = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2}).([0-9]{7})$/;
+			
+			//  "2008-12-28T00:00:00"
+			var isoReg = /^([0-9]{4})-([0-9]{2})-([0-9]{2})T([0-9]{2}):([0-9]{2}):([0-9]{2})$/;
+		
+			//"2008-12-28"
+			var yyyyMMdd = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/;
+			
+			//  "new Date(2009, 1, 1)"
+			//  "new Date(1230444000000)
+			var newReg = /^new/;
+			
+			//  "\/Date(1234418400000-0600)\/"
+			var stdReg = /^\\\/Date\(([0-9]{13})-([0-9]{4})\)\\\/$/;
+			
+			if (k = dateStr.match(isoRegPlus)) {
+				return new Date(k[1],k[2]-1,k[3],k[4],k[5],k[6]);
+			} else if (k = dateStr.match(isoReg)) {
+				return new Date(k[1],k[2]-1,k[3],k[4],k[5],k[6]);
+			} else if (k = dateStr.match(yyyyMMdd)) {
+				return new Date(k[1],k[2]-1,k[3]);
+			}
+			
+			if (k = dateStr.match(stdReg)) {
+				return new Date(k[1]);
+			}
+			
+			if (k = dateStr.match(newReg)) {
+				return eval('(' + dateStr + ')');
+			}
+			
+			return tDt;
+		}
+	},
+	
+	_buildEventBlock: function(ev, weekNumber) {
+		var block = $('<div class="Event" id="Event_' + ev.EventID + '_' + weekNumber + '" eventid="' + ev.EventID +'"></div>');
+		
+		if(ev.CssClass) { block.addClass(ev.CssClass) }
+		block.bind('click', null, this._trigger('onEventBlockClick', 0, [ev]));
+		block.bind('mouseover', null, this._trigger('onEventBlockOver', 0, [ev]));
+		block.bind('mouseout', null, this._trigger('onEventBlockOut', 0, [ev]));
+		
+		if (this.options.dragableEvents) {
+			this._dragableEvent(ev, block, weekNumber);
+		}
+		
+		var link;
+		if (ev.URL && ev.URL.length > 0) {
+			link = $('<a href="' + ev.URL + '">' + ev.Title + '</a>');
+		} else {
+			link = $('<a>' + ev.Title + '</a>');
+		}
+		
+		link.bind('click', null, this._trigger('onEventLinkClick', 0, [ev]));
+		block.append(link);
+		return block;
+	},
+
+	_dragableEvent: function(event, block, weekNumber) {
+		block.draggable({
+			zIndex: 4,
+			delay: 50,
+			opacity: 0.5,
+			revertDuration: 1000,
+			cursorAt: { left: 5 },
+			start: function(ev, ui) {
+				//hide any additional event parts
+				for (var i = 0; i <= _gridRows; i++) {
+					if (i == weekNumber) {
+						continue;
+					}
+					
+					var e = _eventObj['Event_' + event.EventID + '_' + i];
+					if (e) { e.hide(); }
+				}
+			}
+		});
+	},
+	
 	destroy: function() {
 		
 	},
@@ -215,16 +463,25 @@ $.widget("ui.jmonthly", {
 		this._trigger('afterChangeMonth', 0, [newDate])
 	},
 	
+	//clears events in UI and event array.
+	clear: function() {
+		this.clearEvents();
+		this.options.events = [];
+	},
+	
 	addEvent: function(collection) {
 		//add array or single
 	},
 	
-	removeEvents: function() {
+	//just clears the boxes and event block (UI)
+	clearEvents: function() {
 		//removes all events
-	},
-	
-	replaceEvents: function(collection) {
+		$.each(this._cal.boxes, function() {
+			this.clear();
+		});
 		
+		$(".Event", this.element).remove();
+		$(".MoreEvents", this.element).remove();
 	}
 	
 });
@@ -249,6 +506,7 @@ $.extend($.ui.jmonthly, {
 		nextLinkText: 'Next &rsaquo;',
 		
 		yearLinks: true,
+		showMoreText: 'Show More'
 	}
 });
 
@@ -263,6 +521,7 @@ function CalendarMonth() {
 	this.totalDates = 0;
 	this.gridRows = 0;
 	this.totalBoxes = 0;
+	this.boxes = [];
 	this.dateRange = {
 		startDate: null,
 		endDate: null
@@ -285,6 +544,7 @@ function CalendarMonth() {
 	this.update = function(newDate) {
 		// update the object when changing months
 		this.workingDate = newDate.moveToFirstDayOfMonth();
+		this.boxes = [];
 		this._load();
 		return this;
 	};
@@ -303,5 +563,57 @@ function CalendarMonth() {
 	};
 };
 
+function CalendarDateBox(id, boxDate, cell, label) {
+	this.id = id;
+	this.date = boxDate;
+	this.cell = cell;
+	this.label = label;
+	this.weekNumber = Math.floor(id / 7);
+	this.events= [];
+	this.isTooManySet = false;
+	this.vOffset = 0;
+	
+	this.echo = function() {
+		$.log("Date: " + this.date + " WeekNumber: " + this.weekNumber + " ID: " + this.id);
+	};
+	
+	this.clear = function() {
+		this.events = [];
+		this.isTooManySet = false;
+		this.vOffset = 0;
+	};
+	
+	this.getCellPosition = function() {
+		if (this.cell) { 
+			return this.cell.position();
+		}
+		return;
+	};
+	
+	this.getCellBox = function() {
+		if (this.cell) { 
+			return this.cell;
+		}
+		return;
+	};
+	
+	this.getLabelWidth = function() {
+		if (this.label) {
+			return this.label.innerWidth();
+		}
+		return;
+	};
+	
+	this.getLabelHeight = function() {
+		if (this.label) { 
+			return this.label.height();
+		}
+		return;
+	};
+	
+	this.getDate = function() {
+		return this.date;
+	};
+};
 
 })(jQuery);
