@@ -77,34 +77,9 @@ $.widget("ui.jmonthly", {
 				dateBox.addClass('today');
 			}
 			
-			
-			/*if (o.dragableEvents) {
-				dateBox.droppable({
-					hoverClass: o.dragHoverClass,
-					tolerance: 'pointer',
-					drop: function(ev, ui) {
-						var eventId = ui.draggable.attr("eventid")
-						var newDate = new Date($(this).attr("date")).clearTime();
-						
-						var event;
-						$.each(cEvents, function() {
-							if (this.EventID == eventId) {
-								var days = new TimeSpan(newDate - this.StartDateTime).days;
-								
-								this.StartDateTime.addDays(days);
-								this.EndDateTime.addDays(days);
-																
-								event = this;
-							}
-						});
-						
-						$.J.ClearEventsOnCalendar();
-						_drawEventsOnCalendar();
-						
-						def.onEventDropped.call(this, event, newDate);
-					}
-				});
-			}*/
+			if (o.dragableEvents) {
+				this._enableDropBox(dateBox);
+			}
 			
 			//_boxes.push(new CalendarBox(i, currentDate, dateBox, dateLink));
 			row.append(dateBox);
@@ -196,6 +171,34 @@ $.widget("ui.jmonthly", {
 		headRow = $("<thead id=\"CalendarHead\"></thead>").css({ "height" : o.headerHeight + "px" }).append(headRow);
 		headRow = headRow.prepend(navRow);
 		return headRow;
+	},
+	
+	_enableDropBox: function(dateBox) {
+		dateBox.droppable({
+			hoverClass: this.options.dragHoverClass,
+			tolerance: 'pointer',
+			drop: function(ev, ui) {
+				var eventId = ui.draggable.attr("eventid")
+				var newDate = new Date($(this).attr("date")).clearTime();
+				
+				var event;
+				$.each(cEvents, function() {
+					if (this.EventID == eventId) {
+						var days = new TimeSpan(newDate - this.StartDateTime).days;
+						
+						this.StartDateTime.addDays(days);
+						this.EndDateTime.addDays(days);
+														
+						event = this;
+					}
+				});
+				
+				//$.J.ClearEventsOnCalendar();
+				//_drawEventsOnCalendar();
+				
+				def.onEventDropped.call(this, event, newDate);
+			}
+		});
 	},
 	
 	destroy: function() {
