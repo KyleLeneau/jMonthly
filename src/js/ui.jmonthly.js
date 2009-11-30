@@ -17,7 +17,7 @@ $.widget("ui.jmonthly", {
 
 		// calendar object to track props.
 		this._calendar = new CalendarMonth().init(this.options.startDate);
-		console.log(this._calendar);
+		$.log(this._calendar);
 		
 		
 		this._drawCalendar(true);
