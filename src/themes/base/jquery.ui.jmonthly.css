@@ -1,0 +1,116 @@
+.ui-jmonthly {
+	position:relative;
+	height:650px;
+	width:980px;
+}
+
+.ui-jmonthly .MonthNavigation
+{
+	border-bottom:solid 1px #ddd;
+	clear:both;
+	height:20px;
+	padding:5px 10px 0 10px;
+}
+
+.ui-jmonthly .MonthNavPrev,
+.ui-jmonthly .MonthNavNext,
+.ui-jmonthly .TodayLink {
+	width:7%;
+	float:left;
+}
+
+.ui-jmonthly .YearNavNext,
+.ui-jmonthly .YearNavPrev {
+	width:10%;
+	float:left;
+}
+
+.ui-jmonthly .MonthName  {
+	width:59%;
+	text-align:center;
+	font-weight:bold;
+	float:left;
+}
+
+.ui-jmonthly table {
+	height:100%;
+	width:100%;
+	border:solid 1px #ddd;
+	border-collapse:collapse;
+}
+
+.ui-jmonthly #CalendarHead  {
+	width:100%;
+	background:#F7F7F7 none repeat scroll 0 0;
+}
+
+.ui-jmonthly #CalendarHead .DateHeader {
+	width:14.285%;
+	text-align:center;
+}
+
+.ui-jmonthly .ui-jmonthly-body{
+}
+
+.ui-jmonthly-body .inactive,
+.ui-jmonthly-body .weekend {
+	background:#fafafa none repeat scroll 0 0;
+}
+.today, .ui-jmonthly-body .DateBoxOver {
+	background:#A9DFFF none repeat scroll 0 0;
+}
+
+.ui-jmonthly .MoreEvents {
+	font-size:12px;
+	padding:1px 1px 1px 4px;
+	cursor:pointer;
+	display:block;
+	position:absolute;
+	text-align:center;
+	height:14px;
+}
+
+.ui-jmonthly .Event {
+	font-size:12px;
+	padding:1px 1px 1px 4px;
+	background-color:#C0D0FF;
+	border:solid 1px #000;
+	cursor:pointer;
+	display:block;
+	position:absolute;
+	text-align:left;
+	overflow:hidden;
+	height:14px;
+}
+
+.Event a {
+	text-decoration:none;
+	color:#000;
+	float:left;
+	white-space:nowrap;
+	padding-top:1px;
+}
+.Event a:hover { text-decoration:underline; }
+.Event span.ui-icon-triangle-1-w { float:left; }
+.Event span.ui-icon-triangle-1-e { float:right; }
+
+
+
+.ui-jmonthly-datebox {
+	vertical-align:top;
+	border:solid 1px #ddd;
+	width:135px;
+}
+
+.ui-jmonthly-datelabel {
+	height:16px;
+	background:#F7F7F7 none repeat scroll 0 0;
+	text-align:right;
+	cursor:pointer;
+	padding:0 5px 2px;
+	text-decoration:none;
+	line-height:16px;
+}
+
+.ui-jmonthly-week { }
+.ui-nav-disabled { }
