@@ -11,7 +11,28 @@
 
 $.widget("ui.jmonthly", {
 	
-	_init: function() {
+	options: {
+		events: [],
+		headerHeight: 50,
+		firstDayOfWeek: 0,
+		startDate: new Date(),
+		dragableEvents: false,
+		dragHoverClass: 'DateBoxOver',
+		
+		todayLink: true,
+		todayLinkText: 'Today',
+		
+		previousLink: true,
+		previousLinkText: '&lsaquo; Prev',
+		
+		nextLink: true,
+		nextLinkText: 'Next &rsaquo;',
+		
+		yearLinks: true,
+		showMoreText: 'Show More'
+	},
+	
+	_create: function() {
 		
 		this.element.addClass("ui-jmonthly");
 
@@ -450,7 +471,7 @@ $.widget("ui.jmonthly", {
 	},
 	
 	destroy: function() {
-		
+		$.Widget.prototype.destroy.call(this);
 	},
 	
 	changeMonth: function(newDate) {
@@ -484,30 +505,6 @@ $.widget("ui.jmonthly", {
 		$(".MoreEvents", this.element).remove();
 	}
 	
-});
-
-$.extend($.ui.jmonthly, {
-	version: "0.0.1",
-	defaults: {
-		events: [],
-		headerHeight: 50,
-		firstDayOfWeek: 0,
-		startDate: new Date(),
-		dragableEvents: false,
-		dragHoverClass: 'DateBoxOver',
-		
-		todayLink: true,
-		todayLinkText: 'Today',
-		
-		previousLink: true,
-		previousLinkText: '&lsaquo; Prev',
-		
-		nextLink: true,
-		nextLinkText: 'Next &rsaquo;',
-		
-		yearLinks: true,
-		showMoreText: 'Show More'
-	}
 });
 
 
