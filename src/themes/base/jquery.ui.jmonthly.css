@@ -12,6 +12,16 @@
 	padding:5px 10px 0 10px;
 }
 
+.ui-jmonthly .MonthNavigation a
+{
+	cursor:pointer;
+}
+
+.ui-jmonthly .MonthNavigation a:hover
+{
+	text-decoration:underline;
+}
+
 .ui-jmonthly .MonthNavPrev,
 .ui-jmonthly .MonthNavNext,
 .ui-jmonthly .TodayLink {

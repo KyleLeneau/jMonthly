@@ -41,7 +41,7 @@ $.widget("ui.jmonthly", {
 		$.log(this._cal);
 		
 		
-		this._drawCalendar(true);
+		this._drawCalendar();
 		
 		// draw events if passed in on init.
 		if (this.options.events.length > 0) {
@@ -49,7 +49,7 @@ $.widget("ui.jmonthly", {
 		}
 	},
 	
-	_drawCalendar: function(init) {
+	_drawCalendar: function() {
 		var o = this.options,
 			c = this._cal,
 			self = this,
@@ -507,6 +507,69 @@ $.widget("ui.jmonthly", {
 	
 });
 
+function Calendar()
+{
+	this.tempDate = null;
+	
+	//mon, tue, wed, etc
+	this.startDay = 0;
+	
+	this.firstOfMonth = null;
+	this.lastOfMonth = null;
+	this.daysInMonth = 0;
+	
+	this.uiOffset = 0;
+	this.uiRows = 0;
+	this.uiCells = 0;
+	this.uiEventCells = [];
+	
+	this.visibleDateRange = {
+		start: null,
+		end: null
+	};
+	
+	this.init = function(initDate, firstDayOfWeek)
+	{
+		var tempDt = Date.today().moveToFirstDayOfMonth();
+		
+		// prime the object based on whats passed in
+		if (startDate != undefined)
+		{
+			tempDt = initDate;
+		}
+		
+		if (firstDayOfWeek != undefined && (firstDayOfWeek >= 0 && firstDayOfWeek <= 6))
+		{
+			this.startDay = firstDayOfWeek;
+		}
+		
+		this._load(tempDt);
+		return this
+	};
+	
+	this._load = function(tempDate)
+	{
+		this.daysInMonth = tempDate.getDaysInMonth();
+		this.firstOfMonth = tempDate.clone().moveToFirstDayOfMonth();
+		this.lastOfMonth = tempDate.clone().moveToLastDayOfMonth();
+		
+		this.uiOffset = this.firstOfMonth.getDay() - this.startDay;
+		this.uiRows = Math.ceil((this.uiOffset + this.daysInMonth) / 7);
+		this.uiCells = this.gridRows * 7;
+		
+		this.visibleDateRange.start = this.firstOfMonth.clone().addDays((-1) * this.uiOffset);
+		this.visibleDateRange.end = this.lastOfMonth.clone().addDays((this.uiOffset + this.daysInMonth) - (this.daysInMonth + this.uiOffset));
+	};
+	
+	this.update = function(newDate) {
+		// update the object when changing months
+		this.workingDate = newDate.moveToFirstDayOfMonth();
+		this.uiEventCells = [];
+		this._load(newDate);
+		
+		return this;
+	};
+}
 
 function CalendarMonth() {
 	this.workingDate = Date.today().moveToFirstDayOfMonth();
